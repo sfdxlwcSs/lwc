@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: MIT
  * For full license text, see the LICENSE file in the repo root or https://opensource.org/licenses/MIT
  */
-import { ArrayMap, getOwnPropertyNames, isNull, isObject, isUndefined } from '@lwc/shared';
+import { ArrayMap, getOwnPropertyNames, isUndefined } from '@lwc/shared';
 import { ComponentConstructor } from './component';
 import { createVM, appendRootVM, removeRootVM, getAssociatedVM, CreateVMInit } from './vm';
 import { EmptyObject } from './utils';
@@ -13,34 +13,14 @@ import { getPropNameFromAttrName, isAttributeLocked } from './attributes';
 import { HTMLElementConstructor } from './base-bridge-element';
 import { patchCustomElementWithRestrictions } from './restrictions';
 
-/**
- * This function builds a Web Component class from a LWC constructor
- * so it can be registered as a new element via customElements.define()
- * at any given time. E.g.:
- *
- *      import { buildCustomElementConstructor } from 'lwc';
- *      import Foo from 'ns/foo';
- *      const WC = buildCustomElementConstructor(Foo);
- *      customElements.define('x-foo', WC);
- *      const elm = document.createElement('x-foo');
- *
- */
-export function buildCustomElementConstructor(
-    Ctor: ComponentConstructor,
-    options?: ShadowRootInit
-): HTMLElementConstructor {
+export function buildCustomElementConstructor(Ctor: ComponentConstructor): HTMLElementConstructor {
     const { props, bridge: BaseElement } = getComponentDef(Ctor);
     const normalizedOptions: CreateVMInit = {
         mode: 'open',
         isRoot: true,
         owner: null,
     };
-    if (isObject(options) && !isNull(options)) {
-        const { mode } = options;
-        if (mode === 'closed') {
-            normalizedOptions.mode = mode;
-        }
-    }
+
     return class extends BaseElement {
         constructor() {
             super();

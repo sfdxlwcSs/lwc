@@ -274,7 +274,7 @@ describe('register', () => {
     it('throws when adapter id is not truthy', () => {
         function adapterFactory() {}
         expect(() => register(undefined, adapterFactory)).toThrowError(
-            'adapter id must be an object or a function'
+            'adapter id must be extensible'
         );
     });
 

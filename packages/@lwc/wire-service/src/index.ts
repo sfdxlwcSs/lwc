@@ -5,7 +5,7 @@
  * For full license text, see the LICENSE file in the repo root or https://opensource.org/licenses/MIT
  */
 
-const { freeze, defineProperty } = Object;
+const { freeze, defineProperty, isExtensible } = Object;
 
 // This value needs to be in sync with wiring.ts from @lwc/engine
 const DeprecatedWiredElementHost = '$$DeprecatedWiredElementHostKey$$';
@@ -18,8 +18,8 @@ export function register(
     adapterId: any,
     adapterEventTargetCallback: (eventTarget: WireEventTarget) => void
 ) {
-    if (adapterId == null || !(adapterId instanceof Object)) {
-        throw new TypeError('adapter id must be an object or a function');
+    if (adapterId == null || !isExtensible(adapterId)) {
+        throw new TypeError('adapter id must be extensible');
     }
     if (typeof adapterEventTargetCallback !== 'function') {
         throw new TypeError('adapter factory must be a callable');

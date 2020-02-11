@@ -22,10 +22,10 @@ export default class AdapterConsumer extends LightningElement {
     }
 
     get staticParamValue() {
-        return this.wireConnected.staticParam && this.wireConnected.staticParam.join(',');
+        return this.wireConnected && this.wireConnected.staticParam && this.wireConnected.staticParam.join(',');
     }
 
     get simpleParamValue() {
-        return this.wireConnected.simpleParam;
+        return this.wireConnected && this.wireConnected.simpleParam;
     }
 }

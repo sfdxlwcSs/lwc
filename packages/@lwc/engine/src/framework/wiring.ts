@@ -106,7 +106,8 @@ function createContextWatcher(
 }
 
 function createConnector(vm: VM, name: string, wireDef: WireDef): WireAdapter {
-    const { method, adapter } = wireDef;
+    const { method, adapter, configCallback, hasParams } = wireDef;
+    const { component } = vm;
     const dataCallback = isUndefined(method)
         ? createFieldDataCallback(vm, name)
         : createMethodDataCallback(vm, method);
@@ -128,7 +129,7 @@ function createConnector(vm: VM, name: string, wireDef: WireDef): WireAdapter {
         },
         noop
     );
-    const computeConfigAndUpdate = createConfigWatcher(vm, wireDef, (config: ConfigValue) => {
+    const updateConnectorConfig = (config: ConfigValue) => {
         // every time the config is recomputed due to tracking,
         // this callback will be invoked with the new computed config
         runWithBoundaryProtection(
@@ -141,9 +142,27 @@ function createConnector(vm: VM, name: string, wireDef: WireDef): WireAdapter {
             },
             noop
         );
-    });
-    // computing the initial config (no context at this point because the component is not connected)
-    computeConfigAndUpdate();
+    };
+
+    // Computes the current wire config and calls the update method on the wire adapter.
+    // This initial implementation may change depending on the specific wire instance, if it has params, we will need
+    // to observe changes in the next tick.
+    let computeConfigAndUpdate = () => {
+        updateConnectorConfig(configCallback(component));
+    };
+
+    if (hasParams) {
+        // This wire has dynamic parameters: we wait for the component instance is created and its values set
+        // in order to call the update(config) method.
+        Promise.resolve().then(() => {
+            computeConfigAndUpdate = createConfigWatcher(vm, wireDef, updateConnectorConfig);
+
+            computeConfigAndUpdate();
+        });
+    } else {
+        computeConfigAndUpdate();
+    }
+
     // if the adapter needs contextualization, we need to watch for new context and push it alongside the config
     if (!isUndefined(adapter.contextSchema)) {
         createContextWatcher(vm, wireDef, (newContext: ContextValue) => {
@@ -176,6 +195,7 @@ type WireAdapterSchemaValue = 'optional' | 'required';
 interface WireDef {
     method?: (data: any) => void;
     adapter: WireAdapterConstructor;
+    hasParams: boolean;
     configCallback: ConfigCallback;
 }
 
@@ -208,7 +228,8 @@ export interface WireAdapterConstructor {
 export function storeWiredMethodMeta(
     descriptor: PropertyDescriptor,
     adapter: WireAdapterConstructor,
-    configCallback: ConfigCallback
+    configCallback: ConfigCallback,
+    hasParams: boolean
 ) {
     // support for callable adapters
     if ((adapter as any).adapter) {
@@ -219,6 +240,7 @@ export function storeWiredMethodMeta(
         adapter,
         method,
         configCallback,
+        hasParams,
     };
     WireMetaMap.set(descriptor, def);
 }
@@ -226,7 +248,8 @@ export function storeWiredMethodMeta(
 export function storeWiredFieldMeta(
     descriptor: PropertyDescriptor,
     adapter: WireAdapterConstructor,
-    configCallback: ConfigCallback
+    configCallback: ConfigCallback,
+    hasParams: boolean
 ) {
     // support for callable adapters
     if ((adapter as any).adapter) {
@@ -235,6 +258,7 @@ export function storeWiredFieldMeta(
     const def: WireFieldDef = {
         adapter,
         configCallback,
+        hasParams,
     };
     WireMetaMap.set(descriptor, def);
 }

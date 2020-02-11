@@ -9,6 +9,7 @@ export class EchoWireAdapter {
 
     constructor(callback) {
         this.callback = callback;
+        callback({});
     }
 
     update(config) {

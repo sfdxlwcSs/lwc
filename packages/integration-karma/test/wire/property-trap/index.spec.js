@@ -36,12 +36,12 @@ describe('wire adapter update', () => {
 
         return Promise.resolve().then(() => {
             const actualWiredValues = elm.getWiredProp();
-            expect(spy.length).toBe(2);
+            expect(spy.length).toBe(1);
             expect(actualWiredValues.data.recordId).toBe('default value');
             elm.setWireKeyParameter(wireKey);
 
             return Promise.resolve().then(() => {
-                expect(spy.length).toBe(2);
+                expect(spy.length).toBe(1);
             });
         });
     });

@@ -167,6 +167,12 @@ function buildWireConfigValue(t, wiredValues) {
                 wireConfig.push(t.objectProperty(t.identifier('method'), t.numericLiteral(1)));
             }
 
+            wireConfig.push(
+                t.objectProperty(
+                    t.identifier('hasParams'),
+                    t.booleanLiteral(!!wiredValue.params && wiredValue.params.length > 0)
+                )
+            );
             wireConfig.push(getGeneratedConfig(t, wiredValue));
 
             return t.objectProperty(

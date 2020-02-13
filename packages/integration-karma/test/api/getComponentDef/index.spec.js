@@ -142,12 +142,12 @@ describe('@api', () => {
         expect(props).toEqual(
             jasmine.objectContaining({
                 getterOnly: {
-                    config: 0,
+                    config: 1,
                     type: 'any',
                     attr: 'getter-only',
                 },
                 getterAndSetter: {
-                    config: 0,
+                    config: 3,
                     type: 'any',
                     attr: 'getter-and-setter',
                 },
@@ -168,7 +168,7 @@ describe('@api', () => {
         expect(props).toEqual(
             jasmine.objectContaining({
                 parentProp: {
-                    config: 0,
+                    config: 3,
                     type: 'any',
                     attr: 'parent-prop',
                 },

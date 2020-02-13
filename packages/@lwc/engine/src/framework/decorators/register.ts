@@ -39,8 +39,12 @@ enum PropType {
     Get = 2,
     GetSet = 3,
 }
-interface PropCompilerDef {
-    config: PropType; // 0 m
+
+export interface ApiFieldConfig {
+    config: PropType; // 0m
+}
+
+interface PropCompilerDef extends ApiFieldConfig {
     type: string; // TODO [#1301]: make this an enum
 }
 interface WireCompilerDef {
@@ -173,10 +177,15 @@ export function registerDecorators(
     const wiredMethods: PropertyDescriptorMap = create(null);
     const wiredFields: PropertyDescriptorMap = create(null);
     const observedFields: PropertyDescriptorMap = create(null);
+    const apiFieldsConfig: Record<string, ApiFieldConfig> = create(null);
     let descriptor: PropertyDescriptor | undefined;
     if (!isUndefined(publicProps)) {
         for (const fieldName in publicProps) {
             const propConfig = publicProps[fieldName];
+            apiFieldsConfig[fieldName] = {
+                config: propConfig.config,
+            };
+
             descriptor = getOwnPropertyDescriptor(proto, fieldName);
             if (propConfig.config > 0) {
                 // accessor declaration
@@ -266,6 +275,7 @@ export function registerDecorators(
     setDecoratorsMeta(Ctor, {
         apiMethods,
         apiFields,
+        apiFieldsConfig,
         wiredMethods,
         wiredFields,
         observedFields,
@@ -278,6 +288,7 @@ const signedDecoratorToMetaMap: Map<ComponentConstructor, DecoratorMeta> = new M
 interface DecoratorMeta {
     readonly apiMethods: PropertyDescriptorMap;
     readonly apiFields: PropertyDescriptorMap;
+    readonly apiFieldsConfig: Record<string, ApiFieldConfig>;
     readonly wiredMethods: PropertyDescriptorMap;
     readonly wiredFields: PropertyDescriptorMap;
     readonly observedFields: PropertyDescriptorMap;
@@ -290,6 +301,7 @@ function setDecoratorsMeta(Ctor: ComponentConstructor, meta: DecoratorMeta) {
 const defaultMeta: DecoratorMeta = {
     apiMethods: EmptyObject,
     apiFields: EmptyObject,
+    apiFieldsConfig: EmptyObject,
     wiredMethods: EmptyObject,
     wiredFields: EmptyObject,
     observedFields: EmptyObject,

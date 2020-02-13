@@ -36,7 +36,7 @@ import {
 } from './component';
 import { Template } from './template';
 import { BaseLightningElement, lightningBasedDescriptors } from './base-lightning-element';
-import { getDecoratorsMeta } from './decorators/register';
+import { ApiFieldConfig, getDecoratorsMeta } from './decorators/register';
 import { defaultEmptyTemplate } from './secure-template';
 
 import {
@@ -50,6 +50,7 @@ export interface ComponentDef {
     name: string;
     wire: PropertyDescriptorMap | undefined;
     props: PropertyDescriptorMap;
+    propsConfig: Record<string, ApiFieldConfig>;
     methods: PropertyDescriptorMap;
     template: Template;
     ctor: ComponentConstructor;
@@ -108,7 +109,14 @@ function createComponentDef(
     const { name } = meta;
     let { template } = meta;
     const decoratorsMeta = getDecoratorsMeta(Ctor);
-    const { apiFields, apiMethods, wiredFields, wiredMethods, observedFields } = decoratorsMeta;
+    const {
+        apiFields,
+        apiFieldsConfig,
+        apiMethods,
+        wiredFields,
+        wiredMethods,
+        observedFields,
+    } = decoratorsMeta;
     const proto = Ctor.prototype;
 
     let {
@@ -126,6 +134,7 @@ function createComponentDef(
     const SuperBridge = isNull(superDef) ? BaseBridgeElement : superDef.bridge;
     const bridge = HTMLBridgeElementFactory(SuperBridge, keys(apiFields), keys(apiMethods));
     const props: PropertyDescriptorMap = assign(create(null), superDef.props, apiFields);
+    const propsConfig = assign(create(null), superDef.propsConfig, apiFieldsConfig);
     const methods: PropertyDescriptorMap = assign(create(null), superDef.methods, apiMethods);
     const wire: PropertyDescriptorMap = assign(
         create(null),
@@ -148,6 +157,7 @@ function createComponentDef(
         name,
         wire,
         props,
+        propsConfig,
         methods,
         bridge,
         template,
@@ -258,6 +268,7 @@ const lightingElementDef: ComponentDef = {
     ctor: BaseLightningElement,
     name: BaseLightningElement.name,
     props: lightningBasedDescriptors,
+    propsConfig: EmptyObject,
     methods: EmptyObject,
     wire: EmptyObject,
     bridge: BaseBridgeElement,
@@ -288,15 +299,19 @@ export function getComponentDef(Ctor: any, subclassComponentName?: string): Publ
     // for some external services, e.g.: Locker Service, usually, all they care
     // is about the shape of the constructor, the internals of it are not relevant
     // because they don't have a way to mess with that.
-    const { ctor, name, props, methods } = def;
+    const { ctor, name, props, propsConfig, methods } = def;
     const publicProps: Record<string, PropDef> = {};
     for (const key in props) {
         // avoid leaking the reference to the public props descriptors
-        publicProps[key] = {
-            config: 0, // always a property
-            type: 'any', // no type inference for public services
-            attr: getAttrNameFromPropName(key),
-        };
+        publicProps[key] = assign(
+            create(null),
+            {
+                config: 0, // a property by default
+                type: 'any', // no type inference for public services
+                attr: getAttrNameFromPropName(key),
+            },
+            propsConfig[key]
+        );
     }
     const publicMethods: Record<string, PublicMethod> = {};
     for (const key in methods) {

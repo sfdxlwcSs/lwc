@@ -547,10 +547,11 @@ defineProperties(BaseLightningElementConstructor.prototype, baseDescriptors);
 
 const ComponentConstructorAsCustomElementConstructorMap = new Map();
 
-function getCustomElement(Ctor: ComponentConstructor): HTMLElement {
+function getCustomElementConstructor(Ctor: ComponentConstructor): HTMLElement {
     if ((Ctor as any) === BaseLightningElementConstructor) {
-        // @todo: add test for this case.
-        throw new TypeError(`Invalid Constructor. LightningElement base class can't be claimed as a custom element.`);
+        throw new TypeError(
+            `Invalid Constructor. LightningElement base class can't be claimed as a custom element.`
+        );
     }
     let ce = ComponentConstructorAsCustomElementConstructorMap.get(Ctor);
     if (isUndefined(ce)) {
@@ -566,13 +567,13 @@ function getCustomElement(Ctor: ComponentConstructor): HTMLElement {
  * at any given time. E.g.:
  *
  *      import Foo from 'ns/foo';
- *      customElements.define('x-foo', Foo.CustomElement);
+ *      customElements.define('x-foo', Foo.CustomElementConstructor);
  *      const elm = document.createElement('x-foo');
  *
  */
-defineProperty(BaseLightningElementConstructor, 'CustomElement', {
+defineProperty(BaseLightningElementConstructor, 'CustomElementConstructor', {
     get() {
-        return getCustomElement(this);
+        return getCustomElementConstructor(this);
     },
 });
 

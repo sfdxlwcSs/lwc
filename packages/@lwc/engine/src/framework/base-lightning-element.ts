@@ -25,6 +25,7 @@ import {
     isObject,
     seal,
     defineProperty,
+    isUndefined,
 } from '@lwc/shared';
 import { HTMLElementOriginalDescriptors } from './html-properties';
 import { patchLightningElementPrototypeWithRestrictions } from './restrictions';
@@ -544,17 +545,17 @@ const baseDescriptors: PropertyDescriptorMap = ArrayReduce.call(
 
 defineProperties(BaseLightningElementConstructor.prototype, baseDescriptors);
 
-// Per Component Constructor, track the corresponding Custom Element
-const ContextProviderMetaMap = new Map();
+const ComponentConstructorAsCustomElementConstructorMap = new Map();
 
 function getCustomElement(Ctor: ComponentConstructor): HTMLElement {
     if ((Ctor as any) === BaseLightningElementConstructor) {
-        throw new SyntaxError(`Invalid Constructor`);
+        // @todo: add test for this case.
+        throw new TypeError(`Invalid Constructor. LightningElement base class can't be claimed as a custom element.`);
     }
-    let ce = ContextProviderMetaMap.get(Ctor);
-    if (ce === undefined) {
+    let ce = ComponentConstructorAsCustomElementConstructorMap.get(Ctor);
+    if (isUndefined(ce)) {
         ce = buildCustomElementConstructor(Ctor);
-        ContextProviderMetaMap.set(Ctor, ce);
+        ComponentConstructorAsCustomElementConstructorMap.set(Ctor, ce);
     }
     return ce;
 }
